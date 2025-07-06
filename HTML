@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Boss AI - Automation Canvas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(to right, #000000, #0a0a2a);
+      color: #00bfff;
+      overflow: hidden;
+    }
+    h1 {
+      margin: 10px;
+      text-align: center;
+      text-shadow: 0 0 8px #00bfff;
+    }
+    #nodePanel {
+      position: absolute;
+      top: 70px;
+      left: 10px;
+      width: 140px;
+      background: #111;
+      padding: 10px;
+      border: 2px solid #00bfff;
+      border-radius: 6px;
+      z-index: 100;
+    }
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 160px;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at center, #111, #000);
+      overflow: hidden;
+    }
+    .node {
+      position: absolute;
+      width: 140px;
+      padding: 10px;
+      background: #0e0e0e;
+      border: 2px solid #00bfff;
+      color: #00bfff;
+      text-align: center;
+      border-radius: 6px;
+      text-shadow: 0 0 6px #00bfff;
+      cursor: move;
+    }
+    .connection {
+      position: absolute;
+      pointer-events: none;
+    }
+    button {
+      width: 100%;
+      margin-bottom: 8px;
+      background: #222;
+      color: #00bfff;
+      border: 1px solid #00bfff;
+      border-radius: 4px;
+      padding: 6px;
+      font-family: 'Orbitron', sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <h1>Automation AI Canvas</h1>
+
+  <div id="nodePanel">
+    <button onclick="addNode('Script Writer')">Script Writer</button>
+    <button onclick="addNode('Voiceover')">Voiceover</button>
+    <button onclick="addNode('Logger')">Logger</button>
+  </div>
+
+  <div id="canvas" onmousedown="startConnection(event)" onmouseup="endConnection(event)"></div>
+
+  <script>
+    let nodeId = 0;
+    const canvas = document.getElementById('canvas');
+    let draggingNode = null;
+    let offsetX = 0, offsetY = 0;
+    let startNode = null;
+
+    function addNode(type) {
+      const node = document.createElement('div');
+      node.className = 'node';
+      node.innerText = type;
+      node.dataset.id = nodeId++;
+      node.style.left = '200px';
+      node.style.top = '150px';
+      node.onmousedown = (e) => startDrag(e, node);
+      canvas.appendChild(node);
+    }
+
+    function startDrag(e, node) {
+      draggingNode = node;
+      offsetX = e.offsetX;
+      offsetY = e.offsetY;
+    }
+
+    document.onmousemove = function(e) {
+      if (draggingNode) {
+        draggingNode.style.left = (e.pageX - offsetX) + 'px';
+        draggingNode.style.top = (e.pageY - offsetY) + 'px';
+        updateConnections();
+      }
+    };
+
+    document.onmouseup = function() {
+      draggingNode = null;
+    };
+
+    function startConnection(e) {
+      if (e.target.className.includes('node')) {
+        startNode = e.target;
+      }
+    }
+
+    function endConnection(e) {
+      if (startNode && e.target.className.includes('node') && startNode !== e.target) {
+        drawConnection(startNode, e.target);
+      }
+      startNode = null;
+    }
+
+    function drawConnection(fromNode, toNode) {
+      const line = document.createElement('div');
+      line.className = 'connection';
+      line.dataset.from = fromNode.dataset.id;
+      line.dataset.to = toNode.dataset.id;
+      canvas.appendChild(line);
+      updateConnections();
+    }
+
+    function updateConnections() {
+      document.querySelectorAll('.connection').forEach(line => {
+        const from = document.querySelector(`.node[data-id='${line.dataset.from}']`);
+        const to = document.querySelector(`.node[data-id='${line.dataset.to}']`);
+        const x1 = from.offsetLeft + from.offsetWidth / 2;
+        const y1 = from.offsetTop + from.offsetHeight / 2;
+        const x2 = to.offsetLeft + to.offsetWidth / 2;
+        const y2 = to.offsetTop + to.offsetHeight / 2;
+        const left = Math.min(x1, x2);
+        const top = Math.min(y1, y2);
+        line.style.left = left + 'px';
+        line.style.top = top + 'px';
+        line.style.width = Math.abs(x2 - x1) + 'px';
+        line.style.height = '2px';
+        line.style.background = '#00bfff';
+        line.style.transformOrigin = 'left center';
+        const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+        line.style.transform = `rotate(${angle}deg)`;
+      });
+    }
+  </script>
+</body>
+</html>
